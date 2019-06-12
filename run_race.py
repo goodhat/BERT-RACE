@@ -76,17 +76,17 @@ class RaceExample(object):
 
     def __repr__(self):
         l = [
-            f"id: {self.race_id}",
-            f"article: {self.context_sentence}",
-            f"question: {self.start_ending}",
-            f"option_0: {self.endings[0]}",
-            f"option_1: {self.endings[1]}",
-            f"option_2: {self.endings[2]}",
-            f"option_3: {self.endings[3]}",
+            "id: {}".format(self.race_id),
+            "article: {}".format(self.context_sentence),
+            "question: {}".format(self.start_ending),
+            "option_0: {}".format(self.endings[0]),
+            "option_1: {}".format(self.endings[1]),
+            "option_2: {}".format(self.endings[2]),
+            "option_3: {}".format(self.endings[3]),
         ]
 
         if self.label is not None:
-            l.append(f"label: {self.label}")
+            l.append("label: {}".format(self.label))
 
         return ", ".join(l)
 
@@ -198,15 +198,15 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
         ## display some example
         if example_index < 1:
             logger.info("*** Example ***")
-            logger.info(f"race_id: {example.race_id}")
+            logger.info("race_id: {}".format(example.race_id))
             for choice_idx, (tokens, input_ids, input_mask, segment_ids) in enumerate(choices_features):
-                logger.info(f"choice: {choice_idx}")
-                logger.info(f"tokens: {' '.join(tokens)}")
-                logger.info(f"input_ids: {' '.join(map(str, input_ids))}")
-                logger.info(f"input_mask: {' '.join(map(str, input_mask))}")
-                logger.info(f"segment_ids: {' '.join(map(str, segment_ids))}")
+                logger.info("choice: {}".format(choice_idx))
+                logger.info("tokens: {}".format(' '.join(tokens)))
+                logger.info("input_ids: {}".format(' '.join(map(str, input_ids))))
+                logger.info("input_mask: {}".format(' '.join(map(str, input_mask))))
+                logger.info("segment_ids: {}".format(' '.join(map(str, segment_ids))))
             if is_training:
-                logger.info(f"label: {label}")
+                logger.info("label: {}".format(label))
 
         features.append(
             InputFeatures(
