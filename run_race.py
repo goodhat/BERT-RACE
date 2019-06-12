@@ -113,7 +113,7 @@ class InputFeatures(object):
 
 
 ## paths is a list containing all paths
-def read_race_examples(paths):
+def read_race_examples(paths, question_header=False):
     examples = []
     for path in paths:
         filenames = glob.glob(path+"/*txt")
@@ -125,6 +125,8 @@ def read_race_examples(paths):
                 for i in range(len(data_raw['answers'])):
                     truth = ord(data_raw['answers'][i]) - ord('A')
                     question = data_raw['questions'][i]
+                    if question_header:
+                        question = _Q_add_header(question)
                     options = data_raw['options'][i]
                     examples.append(
                         RaceExample(
@@ -139,6 +141,60 @@ def read_race_examples(paths):
                             label = truth))
                 
     return examples 
+
+def _Q_add_header(q):
+    # 1. Main idea
+    keywords = [['conclusion'],['purpose','passage'],['learn'], ['main'], ['title'], ['gist'], ['topic'], ['principal'], ['summarize'], ['summary'], ['conclude']]
+    if _keyword_in_q(q, keywords):
+        return "Main idea: "+q
+    
+    # 2. Author attitude
+    writer = ['writer', 'editor', 'author', 'passage']
+    attitude = ['think', 'view', 'attitude', 'opinion', 'suggest', 'oppose']
+    keywords = []
+    for w in writer:
+        keywords.extend([[w,a] for a in attitude])
+    if _keyword_in_q(q, keywords):
+        return "Author attitude: "+q
+
+    # 3. Author purpose
+    keywords = [['mention'], ['author'],['attitude'], ['editor'], ['writer'], ['illustrate'], ['definition'], ['example']]
+    if _keyword_in_q(q, keywords):
+        return "Author purpose: "+q
+
+    # 4. Lookup Fact
+    keywords = [['can', 'know'],['because:'], ['because', '_'], ['following', 'true'],['following','false'],['which', 'following'], ['what', 'happen']]
+    if _keyword_in_q(q, keywords):
+        return "Look for fact:"+q
+
+    # 4. Infer 
+    keywords = [['imply'], ['what do we know about'],['which', 'statement'], ['why'], ['infer'], ['reason'],['probably'], ['may'], ['might']]
+    if _keyword_in_q(q, keywords):
+        return "Infer: "+q
+
+    # Classify by 5W1H and CLOZE
+    keywords = [['what'], ['when'],['where'], ['which'], ['who'],['_'], ['  '], ['according', 'to']]
+    if _keyword_in_q(q, keywords):
+        return "Look for fact: "+q
+    keywords = [['how'], ['why']]
+    if _keyword_in_q(q, keywords):
+        return "Infer: "+q
+
+    return "Other: "+q
+
+def _keyword_in_q(q, keywords):
+    q = q.lower()
+    for ks in keywords:
+        flag = False
+        for k in ks:
+            if k not in q:
+                flag = False
+                break
+            else:
+                flag = True
+        if flag:
+            return True
+    return False
 
 
 
@@ -335,6 +391,10 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
+    parser.add_argument('--question_header',
+                        default=False,
+                        type='store_true',
+                        help="Add extra question classification header.")
 
     args = parser.parse_args()
 
@@ -375,7 +435,7 @@ def main():
     num_train_steps = None
     if args.do_train:
         train_dir = os.path.join(args.data_dir, 'train')
-        train_examples = read_race_examples([train_dir+'/high', train_dir+'/middle'])
+        train_examples = read_race_examples([train_dir+'/high', train_dir+'/middle'], question_header=args.question_header)
         num_train_steps = int(
             len(train_examples) / args.train_batch_size / args.gradient_accumulation_steps * args.num_train_epochs)
 
