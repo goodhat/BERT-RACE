@@ -549,61 +549,61 @@ def main():
                     logger.info("Training loss: {}, global step: {}".format(tr_loss/nb_tr_steps, global_step))
 
 
-            ## evaluate on dev set
-            if global_step % 1000 == 0:
-                dev_dir = os.path.join(args.data_dir, 'dev')
-                dev_set = [dev_dir+'/high', dev_dir+'/middle']
+                ## evaluate on dev set
+                if global_step % 1000 == 0:
+                    dev_dir = os.path.join(args.data_dir, 'dev')
+                    dev_set = [dev_dir+'/high', dev_dir+'/middle']
 
-                eval_examples = read_race_examples(dev_set)
-                eval_features = convert_examples_to_features(
-                    eval_examples, tokenizer, args.max_seq_length, True)
-                logger.info("***** Running evaluation: Dev *****")
-                logger.info("  Num examples = %d", len(eval_examples))
-                logger.info("  Batch size = %d", args.eval_batch_size)
-                all_input_ids = torch.tensor(select_field(eval_features, 'input_ids'), dtype=torch.long)
-                all_input_mask = torch.tensor(select_field(eval_features, 'input_mask'), dtype=torch.long)
-                all_segment_ids = torch.tensor(select_field(eval_features, 'segment_ids'), dtype=torch.long)
-                all_label = torch.tensor([f.label for f in eval_features], dtype=torch.long)
-                eval_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label)
-                # Run prediction for full data
-                eval_sampler = SequentialSampler(eval_data)
-                eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+                    eval_examples = read_race_examples(dev_set)
+                    eval_features = convert_examples_to_features(
+                        eval_examples, tokenizer, args.max_seq_length, True)
+                    logger.info("***** Running evaluation: Dev *****")
+                    logger.info("  Num examples = %d", len(eval_examples))
+                    logger.info("  Batch size = %d", args.eval_batch_size)
+                    all_input_ids = torch.tensor(select_field(eval_features, 'input_ids'), dtype=torch.long)
+                    all_input_mask = torch.tensor(select_field(eval_features, 'input_mask'), dtype=torch.long)
+                    all_segment_ids = torch.tensor(select_field(eval_features, 'segment_ids'), dtype=torch.long)
+                    all_label = torch.tensor([f.label for f in eval_features], dtype=torch.long)
+                    eval_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label)
+                    # Run prediction for full data
+                    eval_sampler = SequentialSampler(eval_data)
+                    eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
-                model.eval()
-                eval_loss, eval_accuracy = 0, 0
-                nb_eval_steps, nb_eval_examples = 0, 0
-                for step, batch in enumerate(eval_dataloader):
-                    batch = tuple(t.to(device) for t in batch)
-                    input_ids, input_mask, segment_ids, label_ids = batch
+                    model.eval()
+                    eval_loss, eval_accuracy = 0, 0
+                    nb_eval_steps, nb_eval_examples = 0, 0
+                    for step, batch in enumerate(eval_dataloader):
+                        batch = tuple(t.to(device) for t in batch)
+                        input_ids, input_mask, segment_ids, label_ids = batch
 
-                    with torch.no_grad():
-                        tmp_eval_loss = model(input_ids, segment_ids, input_mask, label_ids)
-                        logits = model(input_ids, segment_ids, input_mask)
+                        with torch.no_grad():
+                            tmp_eval_loss = model(input_ids, segment_ids, input_mask, label_ids)
+                            logits = model(input_ids, segment_ids, input_mask)
 
-                    logits = logits.detach().cpu().numpy()
-                    label_ids = label_ids.to('cpu').numpy()
-                    tmp_eval_accuracy = accuracy(logits, label_ids)
+                        logits = logits.detach().cpu().numpy()
+                        label_ids = label_ids.to('cpu').numpy()
+                        tmp_eval_accuracy = accuracy(logits, label_ids)
 
-                    eval_loss += tmp_eval_loss.mean().item()
-                    eval_accuracy += tmp_eval_accuracy
+                        eval_loss += tmp_eval_loss.mean().item()
+                        eval_accuracy += tmp_eval_accuracy
 
-                    nb_eval_examples += input_ids.size(0)
-                    nb_eval_steps += 1
+                        nb_eval_examples += input_ids.size(0)
+                        nb_eval_steps += 1
 
-                eval_loss = eval_loss / nb_eval_steps
-                eval_accuracy = eval_accuracy / nb_eval_examples
+                    eval_loss = eval_loss / nb_eval_steps
+                    eval_accuracy = eval_accuracy / nb_eval_examples
 
-                result = {'dev_eval_loss': eval_loss,
-                          'dev_eval_accuracy': eval_accuracy,
-                          'global_step': global_step,
-                          'loss': tr_loss/nb_tr_steps}
+                    result = {'dev_eval_loss': eval_loss,
+                            'dev_eval_accuracy': eval_accuracy,
+                            'global_step': global_step,
+                            'loss': tr_loss/nb_tr_steps}
 
-                output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
-                with open(output_eval_file, "a+") as writer:
-                    logger.info("***** Dev results *****")
-                    for key in sorted(result.keys()):
-                        logger.info("  %s = %s", key, str(result[key]))
-                        writer.write("%s = %s\n" % (key, str(result[key])))
+                    output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
+                    with open(output_eval_file, "a+") as writer:
+                        logger.info("***** Dev results *****")
+                        for key in sorted(result.keys()):
+                            logger.info("  %s = %s", key, str(result[key]))
+                            writer.write("%s = %s\n" % (key, str(result[key])))
 
 
 
