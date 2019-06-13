@@ -113,7 +113,7 @@ class InputFeatures(object):
 
 
 ## paths is a list containing all paths
-def read_race_examples(paths, args=None):
+def read_race_examples(paths, question_header=False):
     examples = []
     for path in paths:
         filenames = glob.glob(path+"/*txt")
@@ -125,7 +125,7 @@ def read_race_examples(paths, args=None):
                 for i in range(len(data_raw['answers'])):
                     truth = ord(data_raw['answers'][i]) - ord('A')
                     question = data_raw['questions'][i]
-                    if args.question_header:
+                    if question_header:
                         question = _Q_add_header(question)
                     options = data_raw['options'][i]
                     examples.append(
@@ -393,7 +393,7 @@ def main():
                              "Positive power of 2: static loss scaling value.\n")
     parser.add_argument('--question_header',
                         default=False,
-                        type='store_true',
+                        action='store_true',
                         help="Add extra question classification header.")
 
     args = parser.parse_args()
@@ -435,7 +435,7 @@ def main():
     num_train_steps = None
     if args.do_train:
         train_dir = os.path.join(args.data_dir, 'train')
-        train_examples = read_race_examples([train_dir+'/high', train_dir+'/middle'], args=args)
+        train_examples = read_race_examples([train_dir+'/high', train_dir+'/middle'], question_header=args.question_header)
         num_train_steps = int(
             len(train_examples) / args.train_batch_size / args.gradient_accumulation_steps * args.num_train_epochs)
 
@@ -554,7 +554,7 @@ def main():
                 dev_dir = os.path.join(args.data_dir, 'dev')
                 dev_set = [dev_dir+'/high', dev_dir+'/middle']
 
-                eval_examples = read_race_examples(dev_set, args)
+                eval_examples = read_race_examples(dev_set)
                 eval_features = convert_examples_to_features(
                     eval_examples, tokenizer, args.max_seq_length, True)
                 logger.info("***** Running evaluation: Dev *****")
@@ -628,7 +628,7 @@ def main():
         test_middle = [test_dir + '/middle']
 
         ## test high 
-        eval_examples = read_race_examples(test_high, args)
+        eval_examples = read_race_examples(test_high)
         eval_features = convert_examples_to_features(
             eval_examples, tokenizer, args.max_seq_length, True)
         logger.info("***** Running evaluation: test high *****")
@@ -679,7 +679,7 @@ def main():
 
 
         ## test middle
-        eval_examples = read_race_examples(test_middle, args)
+        eval_examples = read_race_examples(test_middle)
         eval_features = convert_examples_to_features(
             eval_examples, tokenizer, args.max_seq_length, True)
         logger.info("***** Running evaluation: test middle *****")
