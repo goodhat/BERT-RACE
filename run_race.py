@@ -125,8 +125,10 @@ def read_race_examples(paths, question_header=False):
                 for i in range(len(data_raw['answers'])):
                     truth = ord(data_raw['answers'][i]) - ord('A')
                     question = data_raw['questions'][i]
-                    if question_header:
-                        question = _Q_add_header(question)
+                    # if question_header:
+                    #     question = _Q_add_header(question)
+                    if _Q_classifier(q) != "Main idea":
+                        continue
                     options = data_raw['options'][i]
                     examples.append(
                         RaceExample(
@@ -141,6 +143,12 @@ def read_race_examples(paths, question_header=False):
                             label = truth))
                 
     return examples 
+
+def _Q_classifier(q):
+    keywords = [['conclusion'],['purpose','passage'],['learn'], ['main'], ['title'], ['gist'], ['topic'], ['principal'], ['summarize'], ['summary'], ['conclude']]
+    if _keyword_in_q(q, keywords):
+        return "Main idea"
+    return "Other"
 
 def _Q_add_header(q):
     # 1. Main idea
