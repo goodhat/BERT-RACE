@@ -127,7 +127,7 @@ def read_race_examples(paths, question_header=False):
                     question = data_raw['questions'][i]
                     # if question_header:
                     #     question = _Q_add_header(question)
-                    if _Q_classifier(q) != "Main idea":
+                    if _Q_classifier(question) != "Main idea":
                         continue
                     options = data_raw['options'][i]
                     examples.append(
